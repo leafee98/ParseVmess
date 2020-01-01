@@ -1,0 +1,61 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build base64",
+            "type": "shell",
+            "command": "g++",
+            "args": [
+                "main.cpp",
+
+                "-Llib",
+                "-ljsoncpp",
+                "-lmyBase64",
+
+                "-o",
+                "./out/main.out"
+            ], 
+        },
+        {
+            "label": "run",
+            "command": "./out/main.out",
+            "type": "shell",
+            "problemMatcher": [ "$tsc" ],
+            "presentation": {
+                "reveal": "always"
+            },
+            "group": "build",
+            "dependsOn": [
+                "build base64"
+            ]
+        },
+        {
+            "label": "build test",
+            "type": "shell",
+            "command": "g++",
+            "args": [
+                "test.cpp",
+
+                "-Llib",
+                "-ljsoncpp",
+                "-lmyBase64",
+
+                "-o",
+                "./out/test.out"
+            ], 
+        },
+        {
+            "label": "test",
+            "type": "shell",
+            "command": "./out/test.out",
+            "problemMatcher": [],
+            "group": "test",
+            "dependsOn":[
+                "build test"
+            ]
+        }
+    ]
+
+}

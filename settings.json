@@ -1,0 +1,4 @@
+{
+    "templateFile": "./config_template.json",
+    "outputFile": "/home/leafee98/v2ray/config.json"
+}

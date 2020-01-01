@@ -1,0 +1,142 @@
+{
+  "log": {
+    "access": "",
+    "error": "",
+    "loglevel": "warning"
+  },
+  "inbounds": [{
+    "port": 11080,
+    "listen": "127.0.0.1",
+    "tag": "socks-inbound",
+    "protocol": "socks",
+    "settings": {
+      "auth": "noauth",
+      "udp": true,
+      "ip": "127.0.0.1"
+    },
+    "sniffing": {
+      "enabled": true,
+      "destOverride": ["http", "tls"]
+    }
+  },
+  {
+    "port": 11081,
+    "listen": "127.0.0.1",
+    "tag": "socks-inbound",
+    "protocol": "http",
+    "settings": {
+      "timeout": 0,
+      "userLevel": 0
+    },
+
+    "sniffing": {
+      "enabled": true,
+      "destOverride": ["http", "tls"]
+    }
+  }
+  ],
+  "outbounds": [
+    {
+      "tag": "proxy",
+      "protocol": "vmess",
+      "settings": {
+        "vnext": [
+          {
+            "address": null,
+            "port": null,
+            "users": [
+              {
+                "id": null,
+                "alterId": null,
+                "email": null,
+                "security": null
+              }
+            ]
+          }
+        ],
+        "servers": null,
+        "response": null
+      },
+      "streamSettings": {
+        "network": null,
+        "security": null,
+        "tlsSettings": null,
+        "tcpSettings": null,
+        "kcpSettings": null,
+        "wsSettings": {
+          "connectionReuse": true,
+          "path": null,
+          "headers": {
+            "Host": null
+          }
+        },
+        "httpSettings": null,
+        "quicSettings": null
+      },
+      "mux": {
+        "enabled": true
+      }
+    },
+    {
+      "tag": "direct",
+      "protocol": "freedom",
+      "settings": {}
+    },
+    {
+      "protocol": "blackhole",
+      "settings": {},
+      "tag": "blocked"
+    }
+  ],
+
+  "routing": {
+    "domainStrategy": "IPOnDemand",
+    "rules":[
+      {
+        "type": "field",
+        "ip": ["geoip:private"],
+        "outboundTag": "direct"
+      },
+      {
+        "type": "field",
+        "domain": ["geosite:category-ads"],
+        "outboundTag": "blocked"
+      }
+    ]
+  },
+
+  "dns": {
+    "hosts": {
+      "domain:v2ray.com": "www.vicemc.net"
+    },
+    "servers": [
+      "1.1.1.1",
+      {
+        "address": "114.114.114.114",
+        "port": 53,
+        "domains": [
+          "geosite:cn"
+        ]
+      },
+      "8.8.8.8",
+      "localhost"
+    ]
+  },
+
+  "policy": {
+    "levels": {
+      "0": {
+        "uplinkOnly": 0,
+        "downlinkOnly": 0
+      }
+    },
+    "system": {
+      "statsInboundUplink": false,
+      "statsInboundDownlink": false
+    }
+  },
+
+  "stats":{},
+
+  "other": {}
+}
