@@ -9,13 +9,19 @@ const std::string FLAG_TEXT = R"(vmess://)";
 
 std::string templateFile;
 std::string outputFile;
+std::string settingsFile;
 
-int main() {
+int main(int argc, char * argv[]) {
+    if (argc > 1)
+        settingsFile = argv[1];
+    else
+        settingsFile = "./settings.json";
+
     //load settings
-    std::fstream settingsFile("./settings.json", std::ios::in | std::ios::binary);
+    std::fstream settingsStream(settingsFile, std::ios::in | std::ios::binary);
     Json::Value settings;
-    settingsFile >> settings;
-    settingsFile.close();
+    settingsStream >> settings;
+    settingsStream.close();
 
     templateFile = settings["templateFile"].asString();
     outputFile = settings["outputFile"].asString();

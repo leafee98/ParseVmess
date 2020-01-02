@@ -4,7 +4,7 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "build base64",
+            "label": "build main",
             "type": "shell",
             "command": "g++",
             "args": [
@@ -28,7 +28,7 @@
             },
             "group": "build",
             "dependsOn": [
-                "build base64"
+                "build main"
             ]
         },
         {
