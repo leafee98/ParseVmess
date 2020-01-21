@@ -4,9 +4,9 @@
 
 ## 编译
 
-```g++ -Llib -ljsoncpp -lmyBase64 main.cpp -o ./out/main.out```
+请**预先安装jsoncpp的依赖项**, 如arch Linux的发行版可以使用`pacman -S jsoncpp`进行安装.
 
-只需要把指定静态链接库编译`main.cpp`即可, `jsoncpp`即名为此的C++项目, 用于解析json, `myBase64`即本人自己实现的Base64编解码, 源码见本人的另一个项目.
+在依赖项安装正确的前提下, 可以在递归克隆整个项目以后使用`make all`进行编译.
 
 ## 使用
 

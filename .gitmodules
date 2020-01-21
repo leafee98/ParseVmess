@@ -1,0 +1,3 @@
+[submodule "3rdparty/myBase64"]
+	path = 3rdparty/myBase64
+	url = git@github.com:leafee98/myBase64.git

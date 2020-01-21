@@ -1,5 +1,4 @@
 #include <string>
-using std::string;
 
 class myBase64 {
     private:
@@ -8,6 +7,6 @@ class myBase64 {
         static int char2Digit(char c);
 
     public:
-        static string encode(const string & s);
-        static string decode(const string & s);
+        static std::string encode(const std::string & s);
+        static std::string decode(const std::string & s);
 };
