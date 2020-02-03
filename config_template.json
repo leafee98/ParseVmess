@@ -5,7 +5,7 @@
     "loglevel": "warning"
   },
   "inbounds": [{
-    "port": 11080,
+    "port": 10080,
     "listen": "127.0.0.1",
     "tag": "socks-inbound",
     "protocol": "socks",
@@ -14,21 +14,6 @@
       "udp": true,
       "ip": "127.0.0.1"
     },
-    "sniffing": {
-      "enabled": true,
-      "destOverride": ["http", "tls"]
-    }
-  },
-  {
-    "port": 11081,
-    "listen": "127.0.0.1",
-    "tag": "socks-inbound",
-    "protocol": "http",
-    "settings": {
-      "timeout": 0,
-      "userLevel": 0
-    },
-
     "sniffing": {
       "enabled": true,
       "destOverride": ["http", "tls"]
