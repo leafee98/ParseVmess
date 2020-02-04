@@ -2,7 +2,9 @@
 help :
 	@echo "    gitSubModule         update submodule of git"
 	@echo "    dependency           copy dependency from submodule"
-	@echo "    all                  build the project"
+	@echo "    build                build the project"
+	@echo "    install              install the binary file and template file"
+	@echo "    all                  build and install the project"
 	@echo "    clean                clean files created by build"
 
 .PHONY : gitSubModule
@@ -23,7 +25,20 @@ clean :
 	make --directory=./3rdparty/myBase64/ clean
 	rm -rf ./out/
 
-.PHONY : all
-all : dependency
+.PHONY : build
+build : dependency
 	[ -d ./out/ ] || mkdir ./out/
-	g++ ./src/main.cpp -o ./out/main.out -L./src/lib -lmyBase64 -ljsoncpp
+	g++ --std=c++17 ./src/main.cpp -o ./out/parseVmess -L./src/lib -lmyBase64 -ljsoncpp
+
+.PHONY : install
+install : build
+	cp ./out/parseVmess /usr/bin/
+	cp ./config_template.json /etc/v2ray/
+
+.PHONY : all
+all : build install
+
+.PHONY : uninstall
+uninstall :
+	rm /usr/bin/parseVmess
+	rm /etc/v2ray/config_template.json

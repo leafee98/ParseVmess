@@ -1,3 +1,6 @@
+// you can modify this template as you need,
+// but the first element of "outbound" will be overwrote by the program.
+
 {
   "log": {
     "access": "",
@@ -43,20 +46,7 @@
         "response": null
       },
       "streamSettings": {
-        "network": null,
-        "security": null,
-        "tlsSettings": null,
-        "tcpSettings": null,
-        "kcpSettings": null,
-        "wsSettings": {
-          "connectionReuse": true,
-          "path": null,
-          "headers": {
-            "Host": null
-          }
-        },
-        "httpSettings": null,
-        "quicSettings": null
+        "network": null
       },
       "mux": {
         "enabled": true
@@ -68,9 +58,9 @@
       "settings": {}
     },
     {
+      "tag": "blocked",
       "protocol": "blackhole",
-      "settings": {},
-      "tag": "blocked"
+      "settings": {}
     }
   ],
 

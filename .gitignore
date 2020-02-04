@@ -1,4 +1,6 @@
 /**/*.out
+/.vscode/
 /out
+/src/include/myBase64/*
 /src/lib/
 /test.cpp

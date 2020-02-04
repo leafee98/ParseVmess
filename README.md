@@ -10,23 +10,50 @@
 
 ## 使用
 
-运行编译结果即可, 要求工作目录下有`settings.json`
+几乎完全重写了整个代码, 重写后的项目在以命令行参数的形式接收vmess链接和制定输入输出位置.
 
-```./out/main.out```
+使用时需要有配置模板文件, 配置模板与普通的v2ray配置文件类似, 可以根据自己需要进行修改, 但是outbound的第一个对象会被vmess分享链接的内容覆盖, 其他项的内容则会保留.
 
-也可以在运行时直接指定`settings.json`的位置
+直接输入不带参数的主程序即可得到使用提示, 如下所示.
 
-```./out/main.out ./settings.json```
+```
+usage:
+        parseVmess [-t <template file>] [-o <output file>] <vmess link>
+
+    -t, --template <template file>
+              Specify where the template file is.
+              Use /etc/v2ray/config_template.json if not specified.
+    -o, --output <output file>
+              Specify where to output the filled the config.
+              Use /etc/v2ray/config.json if not specified.
+              If specified dash(-), will print to stdout.
+    -v, --vmess <vmess link>
+              Specify the vmesslink to be used.
+```
+
+## 安装
+
+可以使用`make all`或者`make insall`来安装文件到合适的位置.
+
+如果需要卸载, 可以执行`make uninstall`.
+
+注意在安装和卸载时, 可能需要使用sudo权限.
 
 ## 进度
 
-目前支持了tcp配置和ws两种配置的vmess链接, 可以看到`main.cpp`里面的`if else`里面还空了几个, 只要理清楚配置结构后往里面套即可, 如果有想法, 直接提`pull request`即可.
+已经基本完成vmess分享链接的支持, 如果有发现任何bug, 可以提issue告知.
 
 ## Vmess协议标准
 
-[分享链接格式说明(ver 2)](https://github.com/2dust/v2rayN/wiki/%E5%88%86%E4%BA%AB%E9%93%BE%E6%8E%A5%E6%A0%BC%E5%BC%8F%E8%AF%B4%E6%98%8E(ver-2))
+遵循v2rayNg所使用的分享链接格式[分享链接格式说明(ver 2)](https://github.com/2dust/v2rayN/wiki/%E5%88%86%E4%BA%AB%E9%93%BE%E6%8E%A5%E6%A0%BC%E5%BC%8F%E8%AF%B4%E6%98%8E(ver-2))
 
-## 所使用的开源项目
+## 使用和借鉴的开源项目
 
-1. [jsoncpp](https://github.com/open-source-parsers/jsoncpp)
-2. (本人实现的)[myBase64](https://github.com/leafee98/myBase64)
+1. 用于解析json的[jsoncpp](https://github.com/open-source-parsers/jsoncpp)
+2. 用于base64解码的(本人实现的)[myBase64](https://github.com/leafee98/myBase64)
+
+3. `src/fills.cpp`中关于vmess分享链接的行为借鉴自[boypt/vmess2json](https://github.com/boypt/vmess2json)
+
+## 许可
+
+[MIT](/LICENSE)

@@ -1,4 +1,0 @@
-{
-    "templateFile": "./config_template.json",
-    "outputFile": "/etc/v2ray/config.json"
-}

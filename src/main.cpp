@@ -1,93 +1,158 @@
 #include "include/myBase64/myBase64.h"
-#include <string>
+#include "fills.hpp"
 #include <json/json.h>
 #include <iostream>
+#include <string>
 #include <fstream>
-#include <sstream>
-#include <iomanip>
+#include <filesystem>
 
-const std::string FLAG_TEXT = R"(vmess://)";
+const std::string VMESS_SCHEMA = R"(vmess://)";
 
-std::string templateFile;
-std::string outputFile;
-std::string settingsFile;
+std::string template_file;
+std::string output_file;
+std::string vmess_link;
+
+
+void print_usage();
+
+bool parse_parameters(int argc, char * argv[]);
+std::string check_files(const std::string & template_file, const std::string & outpt_file);
+
+Json::Value decode_vmess(const std::string & vmess_link);
+Json::Value read_template(const std::string & template_file);
+void write_output(const std::string & output_file, const Json::Value & output_json);
+
 
 int main(int argc, char * argv[]) {
-    if (argc > 1)
-        settingsFile = argv[1];
-    else
-        settingsFile = "./settings.json";
+    if (argc > 1) {
+        if (! parse_parameters(argc, argv))
+            return EXIT_FAILURE;
+    } else {
+        print_usage();
+        return EXIT_SUCCESS;
+    }
 
-    //load settings
-    std::fstream settingsStream(settingsFile, std::ios::in | std::ios::binary);
-    Json::Value settings;
-    settingsStream >> settings;
-    settingsStream.close();
+    std::string check_result = check_files(template_file, output_file);
+    if (check_result.size() > 0) {
+        std::cerr << check_result;
+        return EXIT_FAILURE;
+    }
 
-    templateFile = settings["templateFile"].asString();
-    outputFile = settings["outputFile"].asString();
-    std::cout << "settings:\n" << "  templatePath: " << templateFile << std::endl;
-    std::cout << "  outputPath: " << outputFile << std::endl << std::endl << "input vmess link:\n";
+    Json::Value vmess_json = decode_vmess(vmess_link);
+    if (vmess_json == Json::Value::nullSingleton) {
+        std::cerr << "unsupported schema or not the vmess 2rd version\n";
+        return EXIT_FAILURE;
+    } else
+        std::cout << "/* vmess content: \n" << vmess_json << "*/\n";
 
-    // decode vmess link from stdin
-    std::string vmessLink;
-    std::getline(std::cin, vmessLink);
-    size_t foundIndex = vmessLink.find(FLAG_TEXT);
-    if (foundIndex != std::string::npos)
-        vmessLink.erase(foundIndex, foundIndex + FLAG_TEXT.size());
-    std::string vmessConfig = myBase64::decode(vmessLink);
-
-    Json::Value configJson;
-    Json::Value vmessJson;
-    std::stringstream sstream;
-
-    sstream << vmessConfig;
-    sstream >> vmessJson;
+    Json::Value template_json = read_template(template_file);
+    Json::Value output_json = fill_config(template_json, vmess_json);
+    write_output(output_file, output_json);
     
-    std::fstream tmpInputFile(templateFile, std::ios::in | std::ios::binary);
-    tmpInputFile >> configJson;
-    tmpInputFile.close();
+    
+    return EXIT_SUCCESS;
+}
 
-    configJson["outbounds"][0]["settings"]["vnext"][0]["address"] = vmessJson["add"];
-    configJson["outbounds"][0]["settings"]["vnext"][0]["port"] = std::stoi(vmessJson["port"].asString());
-    configJson["outbounds"][0]["settings"]["vnext"][0]["users"][0]["id"] = vmessJson["id"];
-    configJson["outbounds"][0]["settings"]["vnext"][0]["users"][0]["alterId"] = std::stoi(vmessJson["aid"].asString());
+void print_usage() {
+    std::cerr
+            << "usage:\n"
+            << "        parseVmess [-t <template file>] [-o <output file>] <vmess link>\n"
+            << "    \n"
+            << "    -t, --template <template file>\n"
+            << "              Specify where the template file is.\n"
+            << "              Use /etc/v2ray/config_template.json if not specified.\n"
+            << "    -o, --output <output file>\n"
+            << "              Specify where to output the filled the config.\n"
+            << "              Use /etc/v2ray/config.json if not specified.\n"
+            << "              If specified dash(-), will print to stdout.\n"
+            << "    -v, --vmess <vmess link>\n"
+            << "              Specify the vmesslink to be used.\n";
+}
 
-    Json::Value streamSettings;
-    streamSettings["network"] = vmessJson["net"];
-    streamSettings["security"] = vmessJson["tls"];
-    if (vmessJson["tls"] != Json::Value::null) {
-        streamSettings["tlsSettings"]["allowInsecure"] = true;
-        streamSettings["tlsSettings"]["host"] = vmessJson["host"];
+bool parse_parameters(int argc, char * argv[]) {
+    bool normal = true;
+    try {
+        template_file = "/etc/v2ray/config_template.json";
+        output_file = "/etc/v2ray/config.json";
+        for (int i = 1; i < argc; ++i) {
+            if (std::string("-t") == argv[i] || std::string("--template") == argv[i]) {
+                template_file = argv[++i];
+            } else if (std::string("-o") == argv[i] || std::string("--output") == argv[i]) {
+                output_file = argv[++i];
+            } else {
+                vmess_link = argv[i];
+                if (std::strncmp(vmess_link.c_str(), VMESS_SCHEMA.c_str(), VMESS_SCHEMA.size()) != 0) {
+                    std::cerr << "invalid parameter: " << argv[i] << '\n';
+                    normal = false;
+                }
+            }
+        }
+    } catch (const std::out_of_range & oor) {
+        normal = false;
+        std::cerr << "invalid parameters, use parseVmess without any parameters for help\n";
+    }
+    return normal;
+}
+
+std::string check_files(const std::string & template_file, const std::string & output_file) {
+    std::string check_result;
+
+    std::filesystem::path template_path(template_file);
+    if (std::filesystem::exists(template_path)) {
+        std::ifstream file_input(template_file, std::ios::in);
+        if (! file_input.good()) {
+            check_result.append("template file is not readable. template path: ").append(template_file).append("\n");
+        }
+        file_input.close();
+    } else {
+        check_result.append("template file not exists. template path: ").append(template_file).append("\n");
     }
 
-    std::string switchNet = vmessJson["net"].asString();
-    if (switchNet == "tcp") {
-        Json::Value tcpSettings;
-        tcpSettings["header"]["type"] = vmessJson["type"];
-        tcpSettings["header"]["host"] = vmessJson["host"];
-        tcpSettings["path"] = vmessJson["path"];
-        streamSettings["tcpSettings"] = tcpSettings;
-    } else if (switchNet == "kcp") {
+    if (output_file == "-")
+        return check_result;
 
-    } else if (switchNet == "ws") {
-        Json::Value wsSettings;
-        wsSettings["header"]["host"] = vmessJson["host"];
-        wsSettings["path"] = vmessJson["path"];
-        streamSettings["wsSettings"] = wsSettings;
-    } else if (switchNet == "h2") {
-
-    } else if (switchNet == "quic") {
-
+    std::filesystem::path output_path(output_file);
+    if (std::filesystem::exists(output_path)) {
+        std::ofstream file_output(template_file, std::ios::in);
+        if (! file_output.good()) {
+            check_result.append("output file is not writable. output path: ").append(output_file).append("\n");
+        }
+        file_output.close();
     }
 
-    configJson["outbounds"][0]["streamSettings"] = streamSettings;
+    return check_result;
+}
 
-    std::fstream tmpoutputFile(outputFile, std::ios::out);
-    tmpoutputFile << configJson;
-    tmpoutputFile.close();
-    std::cout << std::endl << "outputPath: " << outputFile << std::endl;
+Json::Value decode_vmess(const std::string & vmess_link) {
+    if (strncmp(VMESS_SCHEMA.c_str(), vmess_link.c_str(), VMESS_SCHEMA.size()) == 0) {
+        std::string vmess_content = myBase64::decode(vmess_link.substr(VMESS_SCHEMA.size()));
+        Json::Value vmess_json;
+        std::stringstream(vmess_content) >> vmess_json;
+        if (vmess_json["v"] == "2") {
+            return vmess_json;
+        }
+    }
+    return Json::Value::nullSingleton;
+}
 
-    std::cout << "done!" << std::endl;
-    return 0;
+Json::Value read_template(const std::string & template_file) {
+    std::fstream file_input(template_file, std::ios::in);
+    std::string template_content = std::string(
+            std::istreambuf_iterator<char>(file_input),
+            std::istreambuf_iterator<char>());
+    file_input.close();
+    Json::Value template_json;
+    std::stringstream(template_content) >> template_json;
+    return template_json;
+}
+
+void write_output(const std::string & output_file, const Json::Value & output_json) {
+    if (output_file == "-") {
+        std::cout << output_json << '\n';
+    } else {
+        std::ofstream file_output(output_file, std::ios::out);
+        std::string output_content = output_json.toStyledString();
+        file_output.write(output_content.c_str(), output_content.size());
+        file_output.close();
+    }
 }
