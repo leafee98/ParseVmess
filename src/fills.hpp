@@ -33,7 +33,7 @@ Json::Value & fill_basic(Json::Value & config, const Json::Value & vmess) {
     vnext[0]["users"][0]["id"] = vmess["id"];
     vnext[0]["users"][0]["alterId"] = std::stoi(vmess["aid"].asString());
 
-    Json::Value & streamSettings = config["out"];
+    Json::Value & streamSettings = config["outbounds"][0]["streamSettings"];
     streamSettings["network"] = vmess["net"];
     if (vmess["tls"] == "tls") {
         streamSettings["security"] = "tls";
