@@ -5,6 +5,7 @@
 #include <string>
 #include <fstream>
 #include <filesystem>
+#include <memory>
 
 const std::string VMESS_SCHEMA = R"(vmess://)";
 
@@ -20,7 +21,10 @@ std::string check_files(const std::string & template_file, const std::string & o
 
 Json::Value decode_vmess(const std::string & vmess_link);
 Json::Value read_template(const std::string & template_file);
-void write_output(const std::string & output_file, const Json::Value & output_json);
+
+std::string unicode_to_utf8(const std::string & str);
+void write_output(const std::string & output_file, const Json::Value & output_json,
+        const Json::Value vmess_json);
 
 
 int main(int argc, char * argv[]) {
@@ -42,13 +46,11 @@ int main(int argc, char * argv[]) {
     if (vmess_json == Json::Value::nullSingleton) {
         std::cerr << "unsupported schema or not the vmess 2rd version\n";
         return EXIT_FAILURE;
-    } else
-        std::cout << "/* vmess content: \n" << vmess_json << "*/\n";
+    }
 
     Json::Value template_json = read_template(template_file);
     Json::Value output_json = fill_config(template_json, vmess_json);
-    write_output(output_file, output_json);
-    
+    write_output(output_file, output_json, vmess_json);
     
     return EXIT_SUCCESS;
 }
@@ -65,7 +67,8 @@ void print_usage() {
             << "              Specify where to output the filled the config.\n"
             << "              Use /etc/v2ray/config.json if not specified.\n"
             << "              If specified dash(-), will print to stdout.\n"
-            << "    -v, --vmess <vmess link>\n"
+            << "\n"
+            << "    <vmess link>\n"
             << "              Specify the vmesslink to be used.\n";
 }
 
@@ -101,7 +104,8 @@ std::string check_files(const std::string & template_file, const std::string & o
     if (std::filesystem::exists(template_path)) {
         std::ifstream file_input(template_file, std::ios::in);
         if (! file_input.good()) {
-            check_result.append("template file is not readable. template path: ").append(template_file).append("\n");
+            check_result.append("template file is not readable. template path: ")
+                    .append(template_file).append("\n");
         }
         file_input.close();
     } else {
@@ -146,13 +150,76 @@ Json::Value read_template(const std::string & template_file) {
     return template_json;
 }
 
-void write_output(const std::string & output_file, const Json::Value & output_json) {
+std::string unicode_to_utf8(const std::string & str) {
+    std::string res;
+    setlocale(LC_ALL, "");
+
+    auto is_escape_unicode = [](std::string::const_iterator _begin, std::string::const_iterator _end) {
+        if (_end - _begin != 6)
+            return false;
+        if (*_begin != '\\' || *(_begin + 1) != 'u')
+            return false;
+        
+        bool result = true;
+        for (auto it = _begin + 2; result && it != _end; ++it) {
+            if (isdigit(*it))
+                continue;
+            char c = tolower(*it);
+            if (c < 'a' && c > 'f')
+                result = false;
+        }
+        return result;
+    };
+    auto hex_to_digit = [](char c) {
+        if (isdigit(c)) return c - '0';
+        else            return c - 'a' + 10;
+    };
+    for (std::string::const_iterator it = str.begin(); it != str.end(); ++it) {
+        if (*it == '\\' && is_escape_unicode(it, (it + 6 < str.end() ? it + 6 : str.end()))) {
+            auto t = it + 2;
+            int num = 0;
+            for (int i = 0; i < 4; ++i, ++t)
+                num *= 16, num += hex_to_digit(*t);
+            std::string tmp(MB_CUR_MAX, '\0');
+            wctomb(nullptr, 0);             // try to shift squences
+            wctomb(&tmp[0], (wchar_t)num);
+
+            res.append(tmp);
+
+            it += 5; // take care of '++it' in for loop
+        } else {
+            res += *it;
+        }
+    }
+
+    return res;
+}
+
+void write_output(const std::string & output_file, const Json::Value & output_json,
+        const Json::Value vmess_json) {
+    Json::StreamWriterBuilder wbuilder;
+    wbuilder["commentStyle"] = "None";
+    std::unique_ptr<Json::StreamWriter> pwriter(wbuilder.newStreamWriter());
+
+    std::stringstream ss;
+    std::string output_str, vmess_ps;
+
+    pwriter->write(output_json, &ss); output_str = ss.str(); ss.str("");
+    pwriter->write(vmess_json["ps"], &ss); vmess_ps = ss.str(); ss.str("");
+
+    output_str = unicode_to_utf8(output_str);
+    vmess_ps = unicode_to_utf8(vmess_ps);
+
     if (output_file == "-") {
-        std::cout << output_json << '\n';
+        std::cerr << "// ps: " << vmess_ps << '\n';
+        std::cout << "// " << vmess_link << '\n';
+        std::cout << output_str;
     } else {
         std::ofstream file_output(output_file, std::ios::out);
-        std::string output_content = output_json.toStyledString();
-        file_output.write(output_content.c_str(), output_content.size());
+        std::cerr << "// ps: " << vmess_ps << '\n';
+        file_output << "// ps: " << vmess_ps << '\n';
+        file_output << "// " << vmess_link << '\n';
+        file_output << output_str;
         file_output.close();
     }
 }

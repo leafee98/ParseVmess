@@ -32,8 +32,8 @@ build : dependency
 
 .PHONY : install
 install : build
-	cp ./out/parseVmess /usr/bin/
-	cp ./config_template.json /etc/v2ray/
+	install ./out/parseVmess /usr/bin/
+	[ -f /etc/v2ray/config_template.json ] || install ./config_template.json /etc/v2ray/
 
 .PHONY : all
 all : build install
