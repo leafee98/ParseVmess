@@ -182,9 +182,9 @@ std::string unicode_to_utf8(const std::string & str) {
                 num *= 16, num += hex_to_digit(*t);
             std::string tmp(MB_CUR_MAX, '\0');
             wctomb(nullptr, 0);             // try to shift squences
-            wctomb(&tmp[0], (wchar_t)num);
+            int len = wctomb(&tmp[0], (wchar_t)num);
 
-            res.append(tmp);
+            res.append(tmp, 0, len);
 
             it += 5; // take care of '++it' in for loop
         } else {
