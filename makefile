@@ -28,11 +28,11 @@ clean :
 .PHONY : build
 build : dependency
 	[ -d ./out/ ] || mkdir ./out/
-	g++ --std=c++17 ./src/main.cpp -o ./out/parseVmess -L./src/lib -lmyBase64 -ljsoncpp
+	g++ --std=c++17 ./src/main.cpp ./src/func.cpp -o ./out/parsevmess -L./src/lib -lmyBase64 -ljsoncpp
 
 .PHONY : install
 install : build
-	install ./out/parseVmess /usr/bin/
+	install ./out/parsevmess /usr/bin/
 	[ -f /etc/v2ray/config_template.json ] || install ./config_template.json /etc/v2ray/
 
 .PHONY : all
@@ -40,5 +40,5 @@ all : build install
 
 .PHONY : uninstall
 uninstall :
-	rm /usr/bin/parseVmess
+	rm /usr/bin/parsevmess
 	rm /etc/v2ray/config_template.json
