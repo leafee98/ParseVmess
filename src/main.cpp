@@ -117,7 +117,7 @@ std::string check_files(const std::string & template_file, const std::string & o
 
     std::filesystem::path output_path(output_file);
     if (std::filesystem::exists(output_path)) {
-        std::ofstream file_output(template_file, std::ios::in);
+        std::ofstream file_output(output_file, std::ios::in);
         if (! file_output.good()) {
             check_result.append("output file is not writable. output path: ").append(output_file).append("\n");
         }
