@@ -100,7 +100,7 @@ bool parse_parameters(int argc, char * argv[], run_param & runp) {
                             || !strcmp(argv[i], "--ps"))) {
                 runp.display_ps = true;
             } else {
-                if (std::strncmp(argv[i], argv[i], VMESS_SCHEMA.size()) != 0
+                if (std::strncmp(argv[i], argv[i], VMESS_SCHEMA.size()) == 0
                         && runp.vmess_link.size() == 0) {
                     runp.vmess_link = argv[i];
                 } else {
