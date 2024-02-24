@@ -2,6 +2,11 @@
 
 把Vmess链接导入到配置模板生成可用的配置
 
+⚠⚠ This is a practice project when I'm learning cpp, and shouldn't be used
+for purpose other than practice, not to mention in product environment. ⚠⚠
+
+⚠⚠ 这只是一个学习 cpp 时的练习项目，不应该以练习以外为目的来使用，更不应该用于生产环境。 ⚠⚠
+
 ## 编译
 
 请**预先安装jsoncpp的依赖项**,
